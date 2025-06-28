@@ -79,17 +79,14 @@ const Login: React.FC = () => {
               </button>
             </div>
 
-          <Link to="/dashboard">
             <Button
               type="submit"
               loading={loading}
               className="w-full"
               size="lg"
-
             >
               Sign In
             </Button>
-            </Link>
           </form>
 
           {/* Footer */}

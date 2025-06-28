@@ -229,6 +229,7 @@ import TestReports from './pages/TestReports';
 import FinalDiagnosis from './pages/FinalDiagnosis';
 import SessionAnalysis from './pages/SessionAnalysis';
 import History from './pages/History';
+import BlogsHome from './pages/bloging';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
 
@@ -250,7 +251,7 @@ const App: React.FC = () => {
           <Route path="/tests/:sessionId" element={<TestReports />} />
           <Route path="/diagnosis/final/:sessionId" element={<FinalDiagnosis />} />
           <Route path="/analysis/:sessionId" element={<SessionAnalysis />} />
-          <Route path="/history" element={<History />} />
+          <Route path="/bloging" element={<BlogsHome />} />
           <Route path="/sessions" element={<History />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
