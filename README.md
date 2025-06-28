@@ -83,6 +83,7 @@
 
 
 git clone https://github.com/username/diagnofy.git
+
 cd diagnofy
 ![Screenshot 2025-06-28 162730](https://github.com/user-attachments/assets/65959fdf-ad31-4287-a4b0-17d0bc59f911)
 ![Screenshot 2025-06-28 162758](https://github.com/user-attachments/assets/bb37fd2b-4fa1-4fc3-a4c6-f937af8d4207)
