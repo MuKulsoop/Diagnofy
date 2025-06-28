@@ -72,7 +72,7 @@
 - 🟢 **Live App**: [Diagnofy Live](#) *(Coming Soon)*  
 - 🔐 **Backend API**: Node.js/Express API with authentication & session logs  
 - 🧠 **AI Engine**: Gemini API used for patient generation & feedback evaluation  
-- 📹 **Demo Video**: [Watch the Walkthrough](#) *(Add Drive or YouTube Link)*
+
 
 ---
 
