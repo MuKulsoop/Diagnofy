@@ -54,7 +54,7 @@ const Onboarding: React.FC = () => {
     if (currentStep === steps.length - 1) {
       setLoading(true);
       try {
-        await updateUser({ ...formData, onboardingCompleted: true });
+        // await updateUser({ ...formData, onboardingCompleted: true });
         navigate('/dashboard');
       } catch (error) {
         console.error('Onboarding completion failed:', error);
@@ -117,7 +117,7 @@ const Onboarding: React.FC = () => {
               <ChevronLeft className="w-4 h-4" />
               Previous
             </Button>
-            <Link to="/dashboard">
+     
             <Button
               onClick={handleNext}
               loading={loading}
@@ -126,7 +126,7 @@ const Onboarding: React.FC = () => {
               {currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
               <ChevronRight className="w-4 h-4" />
             </Button>
-            </Link>
+        
           </div>
         </div>
       </div>

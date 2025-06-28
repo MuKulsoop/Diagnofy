@@ -2,33 +2,39 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Initialize Gemini client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// MAIN function to generate patient using Gemini
+// Enhanced Gemini prompt
 export const generatePatientCase = async (specialization, level) => {
   const prompt = `
 You're simulating a realistic medical patient for a clinical training platform.
 
-Generate a fictional but realistic patient based on:
+Generate a fictional, realistic patient based on:
 - Specialization: ${specialization}
 - Difficulty Level: ${level}
 
-Return the response as **pure JSON** with the following fields:
+Requirements:
+- Choose a realistic disease based on specialization and difficulty.
+- Include symptoms that clearly relate to the disease (use clinical accuracy).
+- Mention emotional state and brief patient history.
+- The health score (0–100) reflects how severe their condition is on arrival. Higher = healthier.
+
+Return the following JSON format ONLY (no markdown, no extra text):
+
 {
   "name": "String",
   "age": Number,
-  "gender": "Male/Female/Other",
+  "gender": "Male" | "Female" | "Other",
   "mainDiseases": [ "String" ],
   "criticalFactors": [ "String" ],
   "symptoms": [ "String" ],
   "emotionalState": "String",
-  "history": "String"
+  "history": "String",
+  "initialHealthScore": Number
 }
-No additional text or explanation.
 `;
 
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // ✅ Free model
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const result = await model.generateContent(prompt);
   const response = await result.response.text();
@@ -36,16 +42,23 @@ No additional text or explanation.
   return parseGeminiPatient(response);
 };
 
-// Helper to clean and parse Gemini response
 export const parseGeminiPatient = (response) => {
   try {
-    // Remove markdown fences like ```json and ```
     const cleaned = response
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    return JSON.parse(cleaned);
+    const parsed = JSON.parse(cleaned);
+
+    // Ensure all fields expected by the schema
+    return {
+      ...parsed,
+      currentHealthScore: parsed.initialHealthScore || 100,
+      isCured: false,
+      isChronic: false,
+      isDeceased: false
+    };
   } catch (err) {
     console.error("Failed to parse Gemini JSON:", response);
     throw new Error("Invalid JSON structure from Gemini");

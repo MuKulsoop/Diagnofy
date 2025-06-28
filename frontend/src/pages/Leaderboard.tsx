@@ -4,12 +4,13 @@ import {
   Medal, 
   Award, 
   TrendingUp, 
-  User,
+  User as UserIcon,
   Crown,
   Star,
   Target,
   Clock
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User as UserType } from '../types';
 import { apiService } from '../config/api';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,65 @@ interface LeaderboardUser extends UserType {
   studyHours: number;
 }
 
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  show: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 300, 
+      damping: 24 
+    }
+  }
+};
+
+const podiumVariants = {
+  hidden: { opacity: 0, y: 50 },
+  show: (index: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: index * 0.2,
+      type: "spring",
+      stiffness: 300
+    }
+  })
+};
+
+const pulseVariants = {
+  pulse: {
+    scale: [1, 1.03, 1],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      repeatType: "reverse"
+    }
+  }
+};
+
+const shimmerVariants = {
+  shimmer: {
+    backgroundPosition: ['-100% 0', '100% 0'],
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      repeatType: "loop"
+    }
+  }
+};
+
 const Leaderboard: React.FC = () => {
   const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
@@ -36,6 +96,7 @@ const Leaderboard: React.FC = () => {
   }, [timeframe]);
 
   const loadLeaderboard = async () => {
+    setLoading(true);
     try {
       const users = await apiService.getLeaderboard();
       // Transform and sort users for leaderboard
@@ -166,13 +227,13 @@ const Leaderboard: React.FC = () => {
   const getRankColor = (rank: number) => {
     switch (rank) {
       case 1:
-        return 'from-yellow-400 to-yellow-600';
+        return 'bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-[0_0_30px_rgba(234,179,8,0.5)]';
       case 2:
-        return 'from-gray-300 to-gray-500';
+        return 'bg-gradient-to-br from-gray-300 to-gray-500 shadow-[0_0_20px_rgba(156,163,175,0.4)]';
       case 3:
-        return 'from-amber-400 to-amber-600';
+        return 'bg-gradient-to-br from-amber-400 to-amber-600 shadow-[0_0_20px_rgba(217,119,6,0.4)]';
       default:
-        return 'from-gray-100 to-gray-200';
+        return 'bg-gradient-to-br from-gray-100 to-gray-200';
     }
   };
 
@@ -183,10 +244,10 @@ const Leaderboard: React.FC = () => {
       <Layout>
         <div className="p-8">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-8 bg-gradient-to-r from-orange-100 to-amber-100 rounded w-1/4 mx-auto"></div>
             <div className="space-y-4">
-              {[...Array(10)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded-2xl"></div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-20 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl"></div>
               ))}
             </div>
           </div>
@@ -197,151 +258,262 @@ const Leaderboard: React.FC = () => {
 
   return (
     <Layout>
-      <div className="p-8 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
+        {/* Animated Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-8"
+        >
+          <motion.div 
+            className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+            animate={{ rotate: [0, 10, -10, 5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+          >
             <Trophy className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Leaderboard</h1>
+          </motion.div>
+          <motion.h1 
+            className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600"
+            animate={{ backgroundPosition: ['0% 50%', '100% 50%'] }}
+            transition={{ repeat: Infinity, duration: 3, repeatType: "reverse" }}
+            style={{ 
+              backgroundSize: '200% 100%',
+            }}
+          >
+            Leaderboard
+          </motion.h1>
           <p className="text-gray-600">See how you rank among medical training peers</p>
-        </div>
+        </motion.div>
 
         {/* Timeframe Filter */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-100 rounded-xl p-1 flex">
-            {(['week', 'month', 'all'] as const).map((period) => (
-              <button
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex justify-center mb-8"
+        >
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-1 flex shadow-md">
+            {(['week', 'month', 'all'] as const).map((period, i) => (
+              <motion.button
                 key={period}
                 onClick={() => setTimeframe(period)}
                 className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   timeframe === period
-                    ? 'bg-white text-orange-600 shadow-sm'
+                    ? 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-600 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 + 0.4 }}
               >
                 {period === 'week' ? 'This Week' : period === 'month' ? 'This Month' : 'All Time'}
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Current User Rank */}
         {currentUserRank && (
-          <Card className="p-6 mb-8 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 bg-gradient-to-br ${getRankColor(currentUserRank.rank)} rounded-xl flex items-center justify-center`}>
-                  {getRankIcon(currentUserRank.rank)}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="p-6 mb-8 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 shadow-lg relative overflow-hidden">
+              <motion.div 
+                className="absolute inset-0"
+                variants={shimmerVariants}
+                animate="shimmer"
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
+                  backgroundSize: '200% 100%',
+                }}
+              />
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    className={`w-12 h-12 ${getRankColor(currentUserRank.rank)} rounded-xl flex items-center justify-center shadow-md`}
+                    variants={pulseVariants}
+                    animate="pulse"
+                  >
+                    {getRankIcon(currentUserRank.rank)}
+                  </motion.div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Your Rank</h3>
+                    <p className="text-sm text-gray-600">#{currentUserRank.rank} out of {leaderboard.length}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Your Rank</h3>
-                  <p className="text-sm text-gray-600">#{currentUserRank.rank} out of {leaderboard.length}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-orange-600">{currentUserRank.totalScore}</p>
-                <p className="text-sm text-gray-600">Total Points</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Top 3 Podium */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {leaderboard.slice(0, 3).map((user, index) => (
-            <Card key={user._id} className={`p-6 text-center ${index === 0 ? 'ring-2 ring-yellow-400' : ''}`}>
-              <div className={`w-16 h-16 bg-gradient-to-br ${getRankColor(user.rank)} rounded-full flex items-center justify-center mx-auto mb-4`}>
-                {getRankIcon(user.rank)}
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <User className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{user.name}</h3>
-              <Badge variant="secondary" size="sm" className="mb-3">
-                {user.specialization}
-              </Badge>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Total Score</span>
-                  <span className="font-medium">{user.totalScore}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Cases</span>
-                  <span className="font-medium">{user.casesCompleted}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Avg Score</span>
-                  <span className="font-medium">{user.averageScore}%</span>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-orange-600">{currentUserRank.totalScore}</p>
+                  <p className="text-sm text-gray-600">Total Points</p>
                 </div>
               </div>
             </Card>
-          ))}
-        </div>
+          </motion.div>
+        )}
 
-        {/* Full Leaderboard */}
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-semibold text-gray-900">Full Rankings</h2>
-          </div>
-          <div className="divide-y divide-gray-100">
-            {leaderboard.map((user) => (
-              <div key={user._id} className={`p-6 hover:bg-gray-50 transition-colors ${
-                user._id === currentUserRank?._id ? 'bg-orange-50' : ''
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 bg-gradient-to-br ${getRankColor(user.rank)} rounded-xl flex items-center justify-center`}>
-                      {getRankIcon(user.rank)}
-                    </div>
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" size="sm">
-                          {user.specialization}
-                        </Badge>
-                        <span className="text-sm text-gray-500">{user.institutionName}</span>
-                      </div>
-                    </div>
+        {/* Top 3 Podium */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          {leaderboard.slice(0, 3).map((user, index) => (
+            <motion.div 
+              key={user._id} 
+              className={index === 0 ? "md:order-2" : index === 1 ? "md:order-1" : "md:order-3"}
+              custom={index}
+              variants={podiumVariants}
+            >
+              <Card 
+                className={`p-6 text-center h-full relative overflow-hidden ${
+                  index === 0 
+                    ? 'ring-2 ring-yellow-400 shadow-[0_10px_40px_rgba(234,179,8,0.3)]' 
+                    : ''
+                }`}
+              >
+                {index === 0 && (
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent animate-pulse" />
+                )}
+                <motion.div 
+                  className={`w-16 h-16 ${getRankColor(user.rank)} rounded-full flex items-center justify-center mx-auto mb-4`}
+                  whileHover={{ scale: 1.1 }}
+                >
+                  {getRankIcon(user.rank)}
+                </motion.div>
+                <motion.div 
+                  className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3"
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <UserIcon className="w-6 h-6 text-blue-600" />
+                </motion.div>
+                <motion.h3 
+                  className="font-semibold text-gray-900 mb-1"
+                  whileHover={{ scale: 1.03 }}
+                >
+                  {user.name}
+                </motion.h3>
+                <Badge 
+                  variant="secondary" 
+                  size="sm" 
+                  className="mb-3 shadow-sm"
+                >
+                  {user.specialization}
+                </Badge>
+                <div className="space-y-2 mt-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Score</span>
+                    <span className="font-medium">{user.totalScore}</span>
                   </div>
-                  <div className="flex items-center gap-8">
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Star className="w-4 h-4 text-yellow-500" />
-                        <span className="font-bold text-gray-900">{user.totalScore}</span>
-                      </div>
-                      <p className="text-xs text-gray-500">Total Score</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Target className="w-4 h-4 text-green-500" />
-                        <span className="font-bold text-gray-900">{user.casesCompleted}</span>
-                      </div>
-                      <p className="text-xs text-gray-500">Cases</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 mb-1">
-                        <TrendingUp className="w-4 h-4 text-blue-500" />
-                        <span className="font-bold text-gray-900">{user.averageScore}%</span>
-                      </div>
-                      <p className="text-xs text-gray-500">Avg Score</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 mb-1">
-                        <Clock className="w-4 h-4 text-purple-500" />
-                        <span className="font-bold text-gray-900">{user.studyHours}h</span>
-                      </div>
-                      <p className="text-xs text-gray-500">Study Time</p>
-                    </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Cases</span>
+                    <span className="font-medium">{user.casesCompleted}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Avg Score</span>
+                    <span className="font-medium">{user.averageScore}%</span>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Full Leaderboard */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Card className="overflow-hidden shadow-xl">
+            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900">Full Rankings</h2>
+            </div>
+            <motion.div 
+              className="divide-y divide-gray-100"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+            >
+              <AnimatePresence>
+                {leaderboard.map((user) => (
+                  <motion.div 
+                    key={user._id} 
+                    variants={itemVariants}
+                    className={`p-4 md:p-6 hover:bg-gradient-to-r hover:from-orange-50/50 hover:to-amber-50/50 transition-all ${
+                      user._id === currentUserRank?._id 
+                        ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500' 
+                        : ''
+                    }`}
+                    whileHover={{ 
+                      scale: 1.01,
+                      boxShadow: "0 10px 20px rgba(0,0,0,0.05)"
+                    }}
+                  >
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-10 h-10 ${getRankColor(user.rank)} rounded-xl flex items-center justify-center shadow-sm`}>
+                          {getRankIcon(user.rank)}
+                        </div>
+                        <motion.div 
+                          className="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center"
+                          whileHover={{ rotate: 20 }}
+                          transition={{ type: "spring" }}
+                        >
+                          <UserIcon className="w-5 h-5 text-blue-600" />
+                        </motion.div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{user.name}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary" size="sm" className="shadow-sm">
+                              {user.specialization}
+                            </Badge>
+                            <span className="text-sm text-gray-500">{user.institutionName}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 md:gap-8">
+                        <div className="text-center min-w-[70px]">
+                          <div className="flex items-center gap-1 mb-1 justify-center">
+                            <Star className="w-4 h-4 text-yellow-500" />
+                            <span className="font-bold text-gray-900">{user.totalScore}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Total Score</p>
+                        </div>
+                        <div className="text-center min-w-[70px]">
+                          <div className="flex items-center gap-1 mb-1 justify-center">
+                            <Target className="w-4 h-4 text-green-500" />
+                            <span className="font-bold text-gray-900">{user.casesCompleted}</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Cases</p>
+                        </div>
+                        <div className="text-center min-w-[70px]">
+                          <div className="flex items-center gap-1 mb-1 justify-center">
+                            <TrendingUp className="w-4 h-4 text-blue-500" />
+                            <span className="font-bold text-gray-900">{user.averageScore}%</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Avg Score</p>
+                        </div>
+                        <div className="text-center min-w-[70px]">
+                          <div className="flex items-center gap-1 mb-1 justify-center">
+                            <Clock className="w-4 h-4 text-purple-500" />
+                            <span className="font-bold text-gray-900">{user.studyHours}h</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Study Time</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          </Card>
+        </motion.div>
       </div>
     </Layout>
   );

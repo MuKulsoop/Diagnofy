@@ -1,18 +1,17 @@
 import Session from "../models/Session.js";
 import Patient from "../models/Patient.js";
+import User from "../models/User.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
 import { getTestAsset } from "../utils/testImageMap.js";
 import dotenv from "dotenv";
 dotenv.config();
 
-// Init Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // 🟢 Start a new session
 export const startSession = async (req, res) => {
-  const { userId, patientId, level, specialization } = req.body;
+  const { userId, patientId, level, specialization, isFollowUp = false } = req.body;
 
   try {
     const session = new Session({
@@ -20,6 +19,7 @@ export const startSession = async (req, res) => {
       patient: patientId,
       level,
       specialization,
+      isFollowUp,
       messages: []
     });
 
@@ -39,71 +39,68 @@ export const chatWithPatient = async (req, res) => {
     const session = await Session.findById(sessionId).populate("patient");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    // Add user's message
     session.messages.push({ sender: "user", text: message });
 
-    // Prepare prompt
     const patient = session.patient;
-   const prompt = `
+    const prompt = `
 You are acting as a patient in a clinical simulation.
+Speak ONLY as the patient. Use natural first-person replies.
 
-🔸 Speak ONLY as the patient. DO NOT include narration, stage directions, or story-like descriptions.
-🔸 Reply naturally, briefly, and realistically — like a human answering a doctor's question.
-🔸 Use first-person language.
-
-Patient Information:
+Patient Info:
 - Age: ${patient.age}
 - Gender: ${patient.gender}
 - Emotional State: ${patient.emotionalState}
 - Symptoms: ${patient.symptoms.join(", ")}
 - History: ${patient.history}
 
-Conversation so far:
+Conversation:
 ${session.messages.map(m => `${m.sender === "user" ? "Doctor" : "Patient"}: ${m.text}`).join("\n")}
-
 Doctor: ${message}
-Patient:
-`;
+Patient:`;
 
     const result = await model.generateContent(prompt);
     const reply = (await result.response.text()).trim();
 
-    // Save patient's reply
     session.messages.push({ sender: "patient", text: reply });
     await session.save();
 
     res.json({ reply, fullConversation: session.messages });
-
   } catch (err) {
     res.status(500).json({ message: "Chat failed", error: err.message });
   }
 };
 
-
-
+// 🧪 Request tests with token deduction
 export const requestTests = async (req, res) => {
   const sessionId = req.params.id;
   const { tests } = req.body;
 
   try {
-    const session = await Session.findById(sessionId).populate("patient");
+    const session = await Session.findById(sessionId).populate("patient user");
     if (!session) return res.status(404).json({ message: "Session not found" });
+
+    const user = session.user;
+    const tokenCostPerTest = 5;
+    const totalCost = tests.length * tokenCostPerTest;
+
+    if (user.tokens < totalCost) {
+      return res.status(400).json({ message: "Insufficient tokens" });
+    }
+
+    user.tokens -= totalCost;
+    await user.save();
 
     const testResults = [];
 
     for (const test of tests) {
       const prompt = `
-You are a medical assistant.
+You are a medical assistant. Generate a test result for:
+Test: ${test}
+Patient: Age ${session.patient.age}, Gender: ${session.patient.gender}
+Disease: ${session.patient.mainDiseases.join(", ")}
+Symptoms: ${session.patient.symptoms.join(", ")}
 
-Based on the patient:
-- Age: ${session.patient.age}
-- Gender: ${session.patient.gender}
-- Disease: ${session.patient.mainDiseases.join(", ")}
-- Symptoms: ${session.patient.symptoms.join(", ")}
-- Critical Factors: ${session.patient.criticalFactors.join(", ")}
-
-Generate a brief, realistic result summary for the test: "${test}"
-Only output the findings. Keep it clinical and brief.
+Output clinical findings only.
 `;
 
       const result = await model.generateContent(prompt);
@@ -115,122 +112,103 @@ Only output the findings. Keep it clinical and brief.
         testName: test,
         resultText,
         resultImageURL: asset?.url || "",
-        format: asset?.format || "text"
+        format: asset?.format || "text",
+        tokenCost: tokenCostPerTest
       });
     }
 
     session.testResults = testResults;
+    session.tokensSpent += totalCost;
     await session.save();
 
     res.json({ message: "Test results generated", testResults });
-
   } catch (err) {
     res.status(500).json({ message: "Test generation failed", error: err.message });
   }
 };
 
-
-
+// 🧠 Analyze session and update gamified rewards
 export const analyzeSession = async (req, res) => {
   const sessionId = req.params.id;
 
   try {
-    const session = await Session.findById(sessionId).populate("patient");
+    const session = await Session.findById(sessionId).populate("patient user");
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    const { patient, messages, testResults, initialDiagnosis, finalDiagnosis } = session;
-
+    const { patient, user, messages, testResults, initialDiagnosis, finalDiagnosis } = session;
     if (!initialDiagnosis || !finalDiagnosis) {
       return res.status(400).json({ message: "Both initial and final diagnoses must be submitted before analysis." });
     }
 
-    const initialPrompt = `
-You are evaluating a MEDICAL TRAINEE'S INITIAL DIAGNOSIS — before any test results.
-
-Patient Info:
-- Age: ${patient.age}, Gender: ${patient.gender}
-- Symptoms: ${patient.symptoms.join(", ")}
-- Critical Factors: ${patient.criticalFactors.join(", ")}
-
-Initial Diagnosis:
-- Clinical Reasoning: ${initialDiagnosis.clinicalReasoning}
-- Preliminary Diagnosis: ${initialDiagnosis.preliminaryDiagnosis}
-- Medications: ${initialDiagnosis.initialMedications.join(", ")}
-
-Conversation History:
-${messages.map(m => `${m.sender === "user" ? "Doctor" : "Patient"}: ${m.text}`).join("\n")}
-
-Rate the trainee's INITIAL diagnosis phase out of 10 using this format:
-
-\`\`\`json
-{
-  "questioningScore": 8,
-  "questioningFeedback": "Good questioning overall, but timeline of symptoms could be clearer.",
-  "diagnosisScore": 7,
-  "diagnosisFeedback": "Preliminary diagnosis was close but missed key differential.",
-  "treatmentScore": 6,
-  "treatmentFeedback": "Prescription was okay but lacked cautionary advice.",
-  "overallScore": 7,
-  "summaryFeedback": "Decent attempt with good direction.",
-  "strengths": ["Empathy", "Basic diagnostic skill"],
-  "areasToImprove": ["Differential diagnosis", "Patient education"]
-}
-\`\`\`
+    // -- Prompts
+    const getPrompt = (phase, diagnosis) => `
+You are evaluating the ${phase} diagnosis.
+Patient Info: Age ${patient.age}, Gender: ${patient.gender}, Symptoms: ${patient.symptoms.join(", ")}
+Diagnosis: ${JSON.stringify(diagnosis)}
+Chat: ${messages.map(m => `${m.sender === "user" ? "Doctor" : "Patient"}: ${m.text}`).join("\n")}
+Return JSON feedback using the given format.
 `;
 
-    const finalPrompt = `
-You are evaluating the FINAL DIAGNOSIS made by a MEDICAL TRAINEE — after reviewing test results.
+    const initialResult = await model.generateContent(getPrompt("initial", initialDiagnosis));
+    const initialParsed = JSON.parse(initialResult.response.text().replace(/```json|```/g, "").trim());
 
-Patient Info:
-- Age: ${patient.age}, Gender: ${patient.gender}
-- Symptoms: ${patient.symptoms.join(", ")}
-- Diseases: ${patient.mainDiseases.join(", ")}
-- Critical Factors: ${patient.criticalFactors.join(", ")}
+    const finalResult = await model.generateContent(getPrompt("final", finalDiagnosis));
+    const finalParsed = JSON.parse(finalResult.response.text().replace(/```json|```/g, "").trim());
 
-Test Results:
-${testResults.map(t => `Test: ${t.testName}\nFindings: ${t.resultText}`).join("\n\n")}
-
-Final Diagnosis:
-- Updated Reasoning: ${finalDiagnosis.updatedReasoning}
-- Final Diagnosis: ${finalDiagnosis.finalDiagnosis}
-- Final Medications: ${finalDiagnosis.finalMedications.join(", ")}
-- Lifestyle Recommendations: ${finalDiagnosis.treatmentPlan?.lifestyleRecommendations}
-- Follow-Up Instructions: ${finalDiagnosis.treatmentPlan?.followUpInstructions}
-
-Chat Summary:
-${messages.map(m => `${m.sender === "user" ? "Doctor" : "Patient"}: ${m.text}`).join("\n")}
-
-Rate the FINAL diagnostic quality out of 10 using the same format:
-
-\`\`\`json
-{
-  ...
-}
-\`\`\`
-`;
-
-    // Run both Gemini evaluations
-    const initialResult = await model.generateContent(initialPrompt);
-    const initialText = (await initialResult.response.text()).trim();
-    const initialJsonMatch = initialText.match(/```json([\s\S]*?)```/);
-    const initialParsed = initialJsonMatch ? JSON.parse(initialJsonMatch[1]) : null;
-
-    const finalResult = await model.generateContent(finalPrompt);
-    const finalText = (await finalResult.response.text()).trim();
-    const finalJsonMatch = finalText.match(/```json([\s\S]*?)```/);
-    const finalParsed = finalJsonMatch ? JSON.parse(finalJsonMatch[1]) : null;
-
-    if (!initialParsed || !finalParsed) {
-      return res.status(400).json({ message: "Invalid response from Gemini. Couldn't extract both analysis reports." });
-    }
-
-    // Save to session
+    // -- Update diagnosis report
     session.initialDiagnosisReport = initialParsed;
     session.finalDiagnosisReport = finalParsed;
+
+    // -- Score processing
+    const score = finalParsed.overallScore || 0;
+    let successPoints = 0;
+    let earnedTokens = 0;
+    let outcome = "chronic";
+    let healthChange = 0;
+
+    if (score >= 8) {
+      outcome = "cured";
+      successPoints = 20;
+      earnedTokens = 15;
+      healthChange = +30;
+      patient.isCured = true;
+    } else if (score <= 3) {
+      outcome = "deceased";
+      successPoints = -10;
+      earnedTokens = 0;
+      healthChange = -50;
+      patient.isDeceased = true;
+    } else {
+      outcome = "chronic";
+      successPoints = 5;
+      earnedTokens = 5;
+      healthChange = -10;
+      patient.isChronic = true;
+    }
+
+    patient.currentHealthScore = Math.max(0, patient.currentHealthScore + healthChange);
+    session.outcome = outcome;
+    session.successPointsEarned = successPoints;
+    session.tokensEarned = earnedTokens;
+    session.countedInStats = true;
+
+    await patient.save();
+
+    // -- Update user performance
+    user.tokens += earnedTokens;
+    user.successPoints += successPoints;
+    user.totalDiagnosed += 1;
+    if (outcome === "cured") user.totalCured += 1;
+    if (outcome === "deceased") user.totalDeaths += 1;
+    await user.save();
+
     await session.save();
 
     res.json({
       message: "Session analyzed successfully",
+      successPoints,
+      earnedTokens,
+      outcome,
       initialDiagnosisReport: initialParsed,
       finalDiagnosisReport: finalParsed
     });
@@ -240,7 +218,7 @@ Rate the FINAL diagnostic quality out of 10 using the same format:
   }
 };
 
-
+// 📝 Submit Initial Diagnosis
 export const submitInitialDiagnosis = async (req, res) => {
   const { id } = req.params;
   const { clinicalReasoning, preliminaryDiagnosis, initialMedications } = req.body;
@@ -256,14 +234,13 @@ export const submitInitialDiagnosis = async (req, res) => {
     };
 
     await session.save();
-
     res.status(200).json({ message: "Initial diagnosis submitted", initialDiagnosis: session.initialDiagnosis });
   } catch (err) {
     res.status(500).json({ message: "Submission failed", error: err.message });
   }
 };
 
-
+// 📝 Submit Final Diagnosis
 export const submitFinalDiagnosis = async (req, res) => {
   const { id } = req.params;
   const { updatedReasoning, finalDiagnosis, finalMedications, treatmentPlan } = req.body;
@@ -280,7 +257,6 @@ export const submitFinalDiagnosis = async (req, res) => {
     };
 
     await session.save();
-
     res.status(200).json({ message: "Final diagnosis submitted", finalDiagnosis: session.finalDiagnosis });
   } catch (err) {
     res.status(500).json({ message: "Submission failed", error: err.message });

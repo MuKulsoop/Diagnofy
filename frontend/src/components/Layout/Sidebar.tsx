@@ -32,11 +32,6 @@ const Sidebar: React.FC = () => {
       path: '/sessions'
     },
     {
-      icon: Clock,
-      label: 'History',
-      path: '/history'
-    },
-    {
       icon: Trophy,
       label: 'Leaderboard',
       path: '/leaderboard'
