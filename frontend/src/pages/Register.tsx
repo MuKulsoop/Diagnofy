@@ -31,11 +31,11 @@ const Register: React.FC = () => {
     }
 
     try {
-      await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
+      // await register({
+      //   name: formData.name,
+      //   email: formData.email,
+      //   password: formData.password
+      // });
       navigate('/onboarding');
     } catch (err) {
       setError('Registration failed. Please try again.');
@@ -52,6 +52,24 @@ const Register: React.FC = () => {
   };
 
   return (
+    <>
+    {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        {[...Array(8)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute rounded-full bg-gradient-to-r from-orange-100 to-red-100 opacity-20"
+            style={{
+              width: `${Math.random() * 300 + 100}px`,
+              height: `${Math.random() * 300 + 100}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `float ${Math.random() * 20 + 10}s infinite alternate`,
+              animationDelay: `${Math.random() * 5}s`
+            }}
+          />
+        ))}
+      </div>
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
@@ -121,16 +139,18 @@ const Register: React.FC = () => {
               placeholder="Confirm your password"
               required
             />
-            <Link to="/onboarding">
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full"
-              size="lg"
-            >
-              Create Account
-            </Button>
-            </Link>
+            
+            {/* Removed the Link wrapper and added mt-4 for extra spacing */}
+            <div className="mt-4">
+              <Button
+                type="submit"
+                loading={loading}
+                className="w-full"
+                size="lg"
+              >
+                Create Account
+              </Button>
+            </div>
           </form>
 
           {/* Footer */}
@@ -145,6 +165,7 @@ const Register: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
