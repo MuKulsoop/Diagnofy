@@ -89,4 +89,4 @@ cd diagnofy
 ![Screenshot 2025-06-28 162758](https://github.com/user-attachments/assets/bb37fd2b-4fa1-4fc3-a4c6-f937af8d4207)
 ![Screenshot 2025-06-28 162814](https://github.com/user-attachments/assets/cd3cca64-18f9-4498-83b3-6b0eb5e3015e)
 
-
+Website : https://diagnofy-sage.vercel.app/
