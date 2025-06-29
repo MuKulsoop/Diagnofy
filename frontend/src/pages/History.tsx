@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import Layout from '../components/Layout/Layout';
 import { 
   Clock, 
   User, 
@@ -9,15 +10,13 @@ import {
   Search,
   Eye,
   TrendingUp,
-  Award
+  Award,
+  Plus,
+  Activity,
+  HeartPulse
 } from 'lucide-react';
 import { Session } from '../types';
 import { apiService } from '../config/api';
-import Layout from '../components/Layout/Layout';
-import Card from '../components/UI/Card';
-import Button from '../components/UI/Button';
-import Input from '../components/UI/Input';
-import Badge from '../components/UI/Badge';
 
 const History: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -41,7 +40,7 @@ const History: React.FC = () => {
       setSessions(sessionsData);
     } catch (error) {
       console.error('Failed to load sessions:', error);
-      // Mock data for development
+      // Mock data with healthStatus added
       const mockSessions: Session[] = [
         {
           _id: '1',
@@ -56,6 +55,7 @@ const History: React.FC = () => {
             symptoms: ['Severe chest pain', 'Shortness of breath', 'Nausea'],
             emotionalState: 'Anxious',
             history: 'Previous hypertension, family history of heart disease',
+            healthStatus: 35,
             createdAt: new Date().toISOString()
           },
           level: 'Intermediate',
@@ -90,6 +90,7 @@ const History: React.FC = () => {
             symptoms: ['High fever', 'Productive cough', 'Chest tightness'],
             emotionalState: 'Worried',
             history: 'Recent travel, smoker',
+            healthStatus: 65,
             createdAt: new Date().toISOString()
           },
           level: 'Beginner',
@@ -124,6 +125,7 @@ const History: React.FC = () => {
             symptoms: ['Pulsating headache', 'Light sensitivity', 'Nausea'],
             emotionalState: 'Distressed',
             history: 'History of migraines, high stress job',
+            healthStatus: 85,
             createdAt: new Date().toISOString()
           },
           level: 'Advanced',
@@ -205,9 +207,30 @@ const History: React.FC = () => {
   };
 
   const getScoreBadge = (score: number) => {
-    if (score >= 8.5) return { variant: 'success' as const, label: 'Excellent' };
-    if (score >= 7.0) return { variant: 'warning' as const, label: 'Good' };
-    return { variant: 'error' as const, label: 'Fair' };
+    if (score >= 8.5) return { 
+      className: 'bg-green-100 text-green-800', 
+      label: 'Excellent' 
+    };
+    if (score >= 7.0) return { 
+      className: 'bg-yellow-100 text-yellow-800', 
+      label: 'Good' 
+    };
+    return { 
+      className: 'bg-red-100 text-red-800', 
+      label: 'Fair' 
+    };
+  };
+
+  const getHealthStatusColor = (health: number) => {
+    if (health >= 70) return 'bg-green-500';
+    if (health >= 40) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const getHealthStatusLabel = (health: number) => {
+    if (health >= 70) return 'Good';
+    if (health >= 40) return 'Moderate';
+    return 'Critical';
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -240,7 +263,7 @@ const History: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-gray-50">
         <div className="p-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -256,23 +279,34 @@ const History: React.FC = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
     <Layout>
-      <div className="p-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6 md:p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Session History</h1>
-          <p className="text-gray-600">Review your past medical training sessions and track your progress</p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Patient Diagnosis History</h1>
+            <p className="text-gray-600 max-w-2xl">
+              Review your past medical cases, track patient health status, and restart diagnoses
+            </p>
+          </div>
+          <Link to="/modules">
+            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200">
+              <Plus size={18} />
+              New Diagnosis
+            </button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
+          <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                 <Clock className="w-6 h-6 text-blue-600" />
               </div>
@@ -281,10 +315,10 @@ const History: React.FC = () => {
                 <p className="text-sm text-gray-600">Total Sessions</p>
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
+          <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                 <Target className="w-6 h-6 text-green-600" />
               </div>
@@ -295,12 +329,12 @@ const History: React.FC = () => {
                 <p className="text-sm text-gray-600">Average Score</p>
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Award className="w-6 h-6 text-orange-600" />
+          <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <Award className="w-6 h-6 text-amber-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900">
@@ -309,54 +343,61 @@ const History: React.FC = () => {
                 <p className="text-sm text-gray-600">Best Score</p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Filters */}
-        <Card className="p-6 mb-8">
+        <div className="p-6 mb-8 bg-white rounded-2xl shadow-sm">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
+                <input
+                  type="text"
                   placeholder="Search by patient name, condition, or specialization..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
                 />
               </div>
             </div>
-            <div className="flex gap-4">
-              <select
-                value={selectedSpecialization}
-                onChange={(e) => setSelectedSpecialization(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-              >
-                <option value="all">All Specializations</option>
-                <option value="cardiology">Cardiology</option>
-                <option value="pulmonology">Pulmonology</option>
-                <option value="neurology">Neurology</option>
-                <option value="emergency">Emergency</option>
-                <option value="internal">Internal Medicine</option>
-              </select>
-              <select
-                value={selectedTimeframe}
-                onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-              </select>
+            <div className="flex gap-4 flex-wrap">
+              <div className="relative flex-1 min-w-[180px]">
+                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select
+                  value={selectedSpecialization}
+                  onChange={(e) => setSelectedSpecialization(e.target.value)}
+                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none bg-white"
+                >
+                  <option value="all">All Specializations</option>
+                  <option value="cardiology">Cardiology</option>
+                  <option value="pulmonology">Pulmonology</option>
+                  <option value="neurology">Neurology</option>
+                  <option value="emergency">Emergency</option>
+                  <option value="internal">Internal Medicine</option>
+                </select>
+              </div>
+              <div className="relative flex-1 min-w-[150px]">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <select
+                  value={selectedTimeframe}
+                  onChange={(e) => setSelectedTimeframe(e.target.value)}
+                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none appearance-none bg-white"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                </select>
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Sessions List */}
         <div className="space-y-4">
           {filteredSessions.length === 0 ? (
-            <Card className="p-12 text-center">
+            <div className="p-12 text-center bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-sm">
               <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">No sessions found</h3>
               <p className="text-gray-600 mb-6">
@@ -366,67 +407,108 @@ const History: React.FC = () => {
                 }
               </p>
               <Link to="/modules">
-                <Button>Start New Session</Button>
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-xl transition-colors duration-200">
+                  Start New Diagnosis
+                </button>
               </Link>
-            </Card>
+            </div>
           ) : (
             filteredSessions.map((session) => (
-              <Card key={session._id} className="p-6" hover>
-                <div className="flex items-start justify-between">
+              <div 
+                key={session._id} 
+                className="p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300"
+              >
+                <div className="flex flex-col md:flex-row items-start justify-between gap-6">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
                       <User className="w-6 h-6 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold text-gray-900">{session.patient.name}</h3>
-                        <Badge variant="secondary" size="sm">{session.specialization}</Badge>
-                        <Badge variant="secondary" size="sm">{session.level}</Badge>
-                      </div>
-                      <p className="text-gray-600 mb-2">
-                        {session.patient.age} years old, {session.patient.gender}
-                      </p>
-                      <p className="text-sm text-gray-700 mb-3">
-                        <strong>Condition:</strong> {session.patient.mainDiseases.join(', ')}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{session.patient.name}</h3>
+                        <span className="px-2.5 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 rounded-full">
+                          {session.specialization}
+                        </span>
+                        <span className="px-2.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                          {session.level}
+                        </span>
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
                           <Calendar className="w-4 h-4" />
                           {formatTimeAgo(session.createdAt)}
                         </div>
-                        {session.finalDiagnosisReport && (
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="w-4 h-4" />
-                            Score: {(session.finalDiagnosisReport.overallScore * 10).toFixed(0)}%
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-gray-600 mb-1">
+                            {session.patient.age} years old, {session.patient.gender}
+                          </p>
+                          <p className="text-sm text-gray-700">
+                            <span className="font-medium">Condition:</span> {session.patient.mainDiseases.join(', ')}
+                          </p>
+                        </div>
+                        
+                        {/* Health Meter */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                              <HeartPulse className="w-4 h-4 text-rose-500" />
+                              Health Status
+                            </div>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full text-white ${getHealthStatusColor(session.patient.healthStatus)}`}>
+                              {getHealthStatusLabel(session.patient.healthStatus)}
+                            </span>
                           </div>
-                        )}
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div 
+                              className={`h-2.5 rounded-full ${getHealthStatusColor(session.patient.healthStatus)}`} 
+                              style={{ width: `${session.patient.healthStatus}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>0%</span>
+                            <span>{session.patient.healthStatus}%</span>
+                            <span>100%</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  
+                  <div className="flex flex-col items-end gap-4">
                     {session.finalDiagnosisReport && (
                       <div className="text-right">
                         <div className={`text-2xl font-bold ${getScoreColor(session.finalDiagnosisReport.overallScore)}`}>
                           {(session.finalDiagnosisReport.overallScore * 10).toFixed(0)}%
                         </div>
-                        <Badge variant={getScoreBadge(session.finalDiagnosisReport.overallScore).variant} size="sm">
+                        <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${getScoreBadge(session.finalDiagnosisReport.overallScore).className}`}>
                           {getScoreBadge(session.finalDiagnosisReport.overallScore).label}
-                        </Badge>
+                        </span>
                       </div>
                     )}
-                    <Link to={`/analysis/${session._id}`}>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </Button>
-                    </Link>
+                    
+                    <div className="flex gap-2">
+                      <Link to={`/simulation/1`}>
+                        <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200">
+                          <Activity className="w-4 h-4" />
+                          Restart Diagnosis
+                        </button>
+                      </Link>
+                      <Link to={`/analysis/${session._id}`}>
+                        <button className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200">
+                          <Eye className="w-4 h-4" />
+                          View Details
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))
           )}
         </div>
       </div>
+    </div>
     </Layout>
   );
 };

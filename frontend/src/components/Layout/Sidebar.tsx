@@ -7,7 +7,8 @@ import {
   Trophy, 
   User, 
   LogOut,
-  Stethoscope
+  Stethoscope,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -38,7 +39,7 @@ const Sidebar: React.FC = () => {
     },
     {
       icon: Stethoscope,
-      label: 'Sessions',
+      label: 'Patient Progress Room',
       path: '/sessions'
     },
     {
@@ -50,6 +51,11 @@ const Sidebar: React.FC = () => {
       icon: User,
       label: 'Profile',
       path: '/profile'
+    },
+    {
+      icon: Activity,
+      label: 'Mediverse Journal',
+      path: '/blogging'
     }
   ];
 

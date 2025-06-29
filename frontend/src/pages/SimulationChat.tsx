@@ -1,23 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Send, 
-  User, 
-  Bot, 
-  Heart, 
-  Activity, 
-  Thermometer, 
+import {
+  Send,
+  User,
+  Bot,
+  Heart,
+  Activity,
+  Thermometer,
   Clock,
   FileText,
   Stethoscope,
   AlertCircle
 } from 'lucide-react';
 import { Patient, Session, Message } from '../types';
-import { apiService } from '../config/api';
 import Layout from '../components/Layout/Layout';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 const SimulationChat: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
@@ -44,13 +45,21 @@ const SimulationChat: React.FC = () => {
 
   const initializeSession = async () => {
     try {
-      // Create new session or get existing one
-      const sessionData = await apiService.createSession(patientId!, 'general');
+      const response = await fetch(`${API_BASE_URL}/sessions/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ patientId, specialization: 'general' }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create session');
+
+      const sessionData = await response.json();
       setSession(sessionData);
       setPatient(sessionData.patient);
       setMessages(sessionData.messages || []);
-      
-      // Add initial patient message if no messages exist
+
       if (!sessionData.messages || sessionData.messages.length === 0) {
         const initialMessage: Message = {
           sender: 'patient',
@@ -61,7 +70,6 @@ const SimulationChat: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to initialize session:', error);
-      // Mock data for development
       const mockPatient: Patient = {
         _id: patientId!,
         name: 'Sarah Johnson',
@@ -100,15 +108,26 @@ const SimulationChat: React.FC = () => {
 
     try {
       if (session) {
-        const response = await apiService.sendMessage(session._id, newMessage);
+        const res = await fetch(`${API_BASE_URL}/sessions/${session._id}/message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ message: newMessage }),
+        });
+
+        if (!res.ok) throw new Error('Failed to send message');
+
+        const response = await res.json();
+
         const patientMessage: Message = {
           sender: 'patient',
           text: response.response,
           timestamp: new Date().toISOString()
         };
+
         setMessages(prev => [...prev, patientMessage]);
       } else {
-        // Mock AI response for development
         setTimeout(() => {
           const mockResponse: Message = {
             sender: 'patient',

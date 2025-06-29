@@ -18,8 +18,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors());
-
+app.use(cors({ origin: '*' }));
 
 app.use("/static/tests", express.static(path.join(__dirname, "assets/tests")));
 

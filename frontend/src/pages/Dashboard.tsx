@@ -142,6 +142,48 @@ const Dashboard: React.FC = () => {
 
   return (
     <Layout>
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0 animate-heartbeat-ventilator"
+             style={{
+               background: 'radial-gradient(ellipse at center, rgba(255, 100, 100, 0.05) 0%, transparent 70%)',
+               mask: 'radial-gradient(ellipse at center, black 0%, transparent 70%)'
+             }}>
+        </div>
+      </div>
+
+      {/* Add custom styles for the animation */}
+      <style jsx>{`
+        @keyframes heartbeatVentilator {
+          0% { 
+            opacity: 0.1;
+            transform: scale(1);
+          }
+          30% {
+            opacity: 0.15;
+            transform: scale(1.02);
+          }
+          45% {
+            opacity: 0.1;
+            transform: scale(1);
+          }
+          60% {
+            opacity: 0.15;
+            transform: scale(1.01);
+          }
+          100% { 
+            opacity: 0.1;
+            transform: scale(1);
+          }
+        }
+        .animate-heartbeat-ventilator {
+          animation: heartbeatVentilator 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
+
+      {/* Content */}
+      <div className="relative z-10 p-8">
+        {/* ... rest of your dashboard content ... */}
+      </div>
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">

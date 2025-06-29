@@ -1,269 +1,456 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Stethoscope, Eye, EyeOff, HeartPulse, Syringe, Pill } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Stethoscope } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
+import Select from '../components/UI/Select';
 
-const Register: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [showPassword, setShowPassword] = useState(false);
+const Onboarding: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    specialization: '',
+    experienceLevel: '',
+    institutionName: '',
+    location: { city: '', state: '', country: '' },
+    currentRole: '',
+    yearOfStudy: '',
+    interests: [] as string[]
+  });
 
-  const { register } = useAuth();
+
+
+
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
+  const steps = [
+    {
+      title: 'Welcome to Diagnofy',
+      subtitle: "Let's start your medical AI training journey",
+      component: <WelcomeStep />
+    },
+    {
+      title: 'Your Medical Background',
+      subtitle: 'Tell us about your specialization and experience',
+      component: <BackgroundStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: 'Institution & Location',
+      subtitle: 'Where are you currently studying or practicing?',
+      component: <InstitutionStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: 'Learning Preferences',
+      subtitle: 'What areas would you like to focus on?',
+      component: <PreferencesStep formData={formData} setFormData={setFormData} />
+    },
+    {
+      title: 'All Set!',
+      subtitle: 'Your profile is ready. Start your training now.',
+      component: <CompletionStep />
     }
-
-    try {
-      await register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password
-      });
-      navigate('/onboarding');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  // Medical-themed floating icons
-  const floatingIcons = [
-    { icon: <HeartPulse className="text-red-300" />, position: 'top-10 left-1/4' },
-    { icon: <Syringe className="text-blue-300" />, position: 'top-1/3 right-10' },
-    { icon: <Pill className="text-green-300" />, position: 'bottom-20 left-10' }
   ];
 
+  const handleNext = async () => {
+    if (currentStep === steps.length - 1) {
+      setLoading(true);
+      try {
+        // await updateUser({ ...formData, onboardingCompleted: true });
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('Onboarding completion failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Floating medical icons */}
-      {floatingIcons.map((item, index) => (
-        <motion.div
-          key={index}
-          initial={{ y: 0, opacity: 0 }}
-          animate={{ 
-            y: [0, -20, 0],
-            opacity: [0, 1, 1],
-          }}
-          transition={{
-            duration: 8 + index * 2,
-            repeat: Infinity,
-            repeatType: 'reverse',
-            delay: index * 0.5,
-            ease: "easeInOut"
-          }}
-          className={`absolute ${item.position} text-4xl z-0`}
-        >
-          {item.icon}
-        </motion.div>
-      ))}
-
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md z-10"
-      >
-        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8 relative overflow-hidden">
-          {/* Pulse animation behind logo */}
-          <motion.div
-            animate={{
-              scale: [1, 1.05, 1],
-              opacity: [0.1, 0.15, 0.1]
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-100 to-red-100 -z-10"
-          />
-
-          {/* Logo */}
-          <motion.div
-            initial={{ y: -20 }}
-            animate={{ y: 0 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            className="text-center mb-8"
-          >
-            <motion.div
-              whileHover={{ rotate: -10, scale: 1.1 }}
-              className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            >
-              <Stethoscope className="w-8 h-8 text-white" />
-            </motion.div>
-            <motion.h1 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-2xl font-bold text-gray-900"
-            >
-              Create Account
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-gray-600 mt-2"
-            >
-              Join thousands of medical professionals
-            </motion.p>
-          </motion.div>
-
-          {/* Error Message */}
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 overflow-hidden"
-              >
-                <p className="text-red-600 text-sm">{error}</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Form with staggered inputs */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Input
-                label="Full Name"
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                required
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Stethoscope className="w-8 h-8 text-white" />
+          </div>
+          <div className="text-sm text-orange-600 mb-2">Step {currentStep + 1} of {steps.length}</div>
+          <div className="flex space-x-2 justify-center mb-4">
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 w-8 rounded-full transition-all duration-300 ${
+                  index <= currentStep ? 'bg-orange-500' : 'bg-gray-200'
+                }`}
               />
-            </motion.div>
-
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <Input
-                label="Email Address"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                required
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="relative"
-            >
-              <Input
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Create a password"
-                required
-              />
-              <motion.button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
-                whileTap={{ scale: 0.9 }}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </motion.button>
-            </motion.div>
-
-            <motion.div
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.7 }}
-            >
-              <Input
-                label="Confirm Password"
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                required
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="pt-2"
-            >
-              <Button
-                type="submit"
-                loading={loading}
-                className="w-full"
-                size="lg"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Create Account
-              </Button>
-            </motion.div>
-          </form>
-
-          {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="mt-8 text-center"
-          >
-            <p className="text-gray-600">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="text-orange-600 hover:text-orange-700 font-medium"
-              >
-                Sign In
-              </Link>
-            </p>
-          </motion.div>
+            ))}
+          </div>
         </div>
-      </motion.div>
+
+        {/* Content */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {steps[currentStep].title}
+            </h1>
+            <p className="text-gray-600">{steps[currentStep].subtitle}</p>
+          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          <div className="mb-8">
+            {steps[currentStep].component}
+          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          {/* Navigation */}
+          <div className="flex justify-between">
+            <Button
+              variant="ghost"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className="flex items-center gap-2"
+
+
+
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+     
+            <Button
+              onClick={handleNext}
+              loading={loading}
+              className="flex items-center gap-2"
+            >
+              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Continue'}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+        
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Register;
+const WelcomeStep: React.FC = () => (
+  <div className="text-center py-8">
+    <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+      <div className="bg-orange-50 p-6 rounded-2xl">
+        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-3 mx-auto">
+          <Stethoscope className="w-6 h-6 text-orange-600" />
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2">AI Patient Simulation</h3>
+        <p className="text-sm text-gray-600">Practice with realistic AI patients</p>
+      </div>
+      <div className="bg-red-50 p-6 rounded-2xl">
+        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-3 mx-auto">
+          <span className="text-lg">🎯</span>
+        </div>
+        <h3 className="font-semibold text-gray-900 mb-2">Diagnostic Training</h3>
+        <p className="text-sm text-gray-600">Improve your diagnostic accuracy</p>
+      </div>
+    </div>
+    <p className="text-gray-600 mt-6">
+      Advanced AI-powered medical training platform designed for healthcare professionals
+    </p>
+  </div>
+);
+
+interface StepProps {
+  formData: any;
+  setFormData: (data: any) => void;
+}
+
+const BackgroundStep: React.FC<StepProps> = ({ formData, setFormData }) => {
+  const specializations = [
+    { value: 'General', label: 'General Medicine' },
+    { value: 'Pediatrics', label: 'Pediatrics' },
+    { value: 'Cardiology', label: 'Cardiology' },
+    { value: 'Neurology', label: 'Neurology' },
+    { value: 'Gynecology', label: 'Gynecology' },
+    { value: 'Emergency', label: 'Emergency Medicine' },
+    { value: 'Other', label: 'Other' }
+  ];
+
+  const experienceLevels = [
+    { value: 'Beginner', label: 'Beginner (0-2 years)' },
+    { value: 'Intermediate', label: 'Intermediate (2-5 years)' },
+    { value: 'Advanced', label: 'Advanced (5+ years)' }
+  ];
+
+
+
+
+
+
+
+
+
+  const roles = [
+    { value: 'Student', label: 'Medical Student' },
+    { value: 'Intern', label: 'Intern' },
+    { value: 'Resident', label: 'Resident' },
+    { value: 'Practitioner', label: 'Practicing Physician' }
+  ];
+
+
+
+
+
+
+
+
+
+
+
+
+  return (
+    <div className="space-y-6">
+      <Select
+        label="Medical Specialization"
+        options={specializations}
+        value={formData.specialization}
+        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+      />
+      <Select
+        label="Experience Level"
+        options={experienceLevels}
+        value={formData.experienceLevel}
+        onChange={(e) => setFormData({ ...formData, experienceLevel: e.target.value })}
+      />
+      <Select
+        label="Current Role"
+        options={roles}
+        value={formData.currentRole}
+        onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
+      />
+      {formData.currentRole === 'Student' && (
+        <Input
+          label="Year of Study"
+          type="number"
+          value={formData.yearOfStudy}
+          onChange={(e) => setFormData({ ...formData, yearOfStudy: e.target.value })}
+          placeholder="e.g., 3"
+        />
+      )}
+    </div>
+  );
+};
+
+const InstitutionStep: React.FC<StepProps> = ({ formData, setFormData }) => (
+  <div className="space-y-6">
+    <Input
+      label="Institution Name"
+      value={formData.institutionName}
+      onChange={(e) => setFormData({ ...formData, institutionName: e.target.value })}
+      placeholder="e.g., Harvard Medical School"
+    />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Input
+        label="City"
+        value={formData.location.city}
+        onChange={(e) => setFormData({ 
+          ...formData, 
+          location: { ...formData.location, city: e.target.value }
+        })}
+        placeholder="e.g., Boston"
+      />
+      <Input
+        label="State"
+        value={formData.location.state}
+        onChange={(e) => setFormData({ 
+          ...formData, 
+          location: { ...formData.location, state: e.target.value }
+        })}
+        placeholder="e.g., MA"
+      />
+      <Input
+        label="Country"
+        value={formData.location.country}
+        onChange={(e) => setFormData({ 
+          ...formData, 
+          location: { ...formData.location, country: e.target.value }
+        })}
+        placeholder="e.g., USA"
+      />
+    </div>
+  </div>
+);
+
+const PreferencesStep: React.FC<StepProps> = ({ formData, setFormData }) => {
+  const interests = [
+    'Diagnostic Accuracy',
+    'Patient Communication',
+    'Emergency Medicine',
+    'Pediatric Cases',
+    'Cardiovascular Diseases',
+    'Neurological Disorders',
+    'Respiratory Conditions',
+    'Infectious Diseases'
+  ];
+
+
+
+
+
+  const toggleInterest = (interest: string) => {
+    const currentInterests = formData.interests || [];
+    if (currentInterests.includes(interest)) {
+      setFormData({
+        ...formData,
+        interests: currentInterests.filter((i: string) => i !== interest)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        interests: [...currentInterests, interest]
+      });
+    }
+  };
+
+
+
+
+
+  return (
+    <div>
+      <p className="text-gray-600 mb-6">Select areas you'd like to focus on (choose multiple):</p>
+      <div className="grid grid-cols-2 gap-3">
+        {interests.map((interest) => (
+          <button
+            key={interest}
+            type="button"
+            onClick={() => toggleInterest(interest)}
+            className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+              formData.interests?.includes(interest)
+                ? 'border-orange-500 bg-orange-50 text-orange-900'
+                : 'border-gray-200 hover:border-orange-300 hover:bg-orange-50'
+            }`}
+          >
+            <span className="font-medium">{interest}</span>
+          </button>
+        ))}
+      </div>
+
+
+
+
+
+
+
+
+    </div>
+  );
+};
+
+const CompletionStep: React.FC = () => {
+  return (
+    <motion.div
+      className="text-center py-12 bg-gradient-to-br from-yellow-50 to-pink-100 rounded-3xl shadow-2xl"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+    >
+      <motion.div
+        className="w-28 h-28 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1.2 }}
+        transition={{
+          type: "spring",
+          stiffness: 260,
+          damping: 20,
+        }}
+      >
+        <motion.span
+          className="text-5xl"
+          animate={{
+            rotate: [0, 10, -10, 10, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            repeatDelay: 3,
+          }}
+        >
+          🎉
+        </motion.span>
+      </motion.div>
+
+      <motion.h3
+        className="text-3xl font-extrabold text-gray-900 mb-4"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        Your Profile is Complete!
+      </motion.h3>
+
+      <motion.p
+        className="text-gray-700 text-lg mb-6 max-w-xl mx-auto"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        You're all set to start your AI-powered medical training journey. <br />
+        Practice with realistic patient scenarios and improve your diagnostic skills!
+      </motion.p>
+
+      <motion.div
+        className="bg-orange-100 p-5 rounded-2xl inline-block shadow-md"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.7 }}
+      >
+        <p className="text-orange-800 font-semibold text-lg">
+          🚀 Ready to begin your first case study?
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+
+export default Onboarding;
