@@ -32,10 +32,7 @@ export const registerUser = async (req, res) => {
       const token = generateToken(user._id);
       
       res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        onboardingCompleted: user.onboardingCompleted,
+        user,
         token
       });
     } else {
@@ -60,11 +57,7 @@ export const loginUser = async (req, res) => {
       const token = generateToken(user._id);
       
       res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        onboardingCompleted: user.onboardingCompleted,
-        
+        user,
         token
       });
     } else {

@@ -32,7 +32,8 @@ const PatientSelection: React.FC = () => {
   const loadPatients = async () => {
     try {
       // In a real app, this would filter by module/specialization
-      const patientsData = await apiService.getPatients();
+      // const patientsData = await apiService.getPatients();
+      console.log(patientsData)
       setPatients(patientsData);
     } catch (error) {
       console.error('Failed to load patients:', error);
