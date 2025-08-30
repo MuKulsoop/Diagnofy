@@ -64,6 +64,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         onboardingCompleted: user.onboardingCompleted,
+        
         token
       });
     } else {
