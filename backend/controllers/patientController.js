@@ -49,7 +49,7 @@ export const generatePatients = async (req, res) => {
 
   try {
     // Generate case data from Gemini
-    AllPatients = []
+    const AllPatients = []
     for ( let i = 0; i < 3; i++){
       const caseData = await generatePatientCase(specialization, level);
 
@@ -60,14 +60,14 @@ export const generatePatients = async (req, res) => {
     });
 
     const savedPatient = await newPatient.save();
-    AllPatients.append(savedPatient);
+    AllPatients.push(savedPatient);
     }
     console.log(AllPatients);
     
 
     return res.status(201).json({
       message: "Patient generated successfully",
-      AllPatients
+      AllPatients : AllPatients
     });
     
   } catch (err) {
