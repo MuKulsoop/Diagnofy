@@ -1,6 +1,9 @@
+import { User } from "lucide-react";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 export interface User {
+  _id: string;
   name: string;
   email: string;
   password: string;
@@ -25,7 +28,7 @@ export const apiConfig = {
       leaderboard: '/users/leaderboard'
     },
     patients: {
-      list: '/patients',
+      list: '/patients/generate',
       bySpecialization: (specialization: string) => `/patients/specialization/${specialization}`
     },
     sessions: {
@@ -60,7 +63,7 @@ export class ApiService {
 
   clearToken() {
     this.token = null;
-    localStorage.removeItem('authToken');
+    // localStorage.removeItem('authToken');
   }
 
   private async request<T>(
@@ -99,6 +102,12 @@ export class ApiService {
         body: JSON.stringify({ email, password }),
       }
     );
+    console.log(response.user)
+    localStorage.setItem('name', response.user.name);
+    localStorage.setItem('id', response.user._id);
+    localStorage.setItem('email', response.user.email);
+    localStorage.setItem('specialization', response.user.specialization);
+    localStorage.setItem('level', response.user.experienceLevel);
     this.setToken(response.token);
     return response;
   }
@@ -122,11 +131,19 @@ export class ApiService {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
-  }
+  };
+  
 
   // Patients methods
+  
   async getPatients() {
-    return this.request<Patient[]>(apiConfig.endpoints.patients.list);
+    const userId = localStorage.getItem("id")
+    const specialization = localStorage.getItem("specialization")
+    const level = localStorage.getItem("level")
+    return this.request<Patient[]>(apiConfig.endpoints.patients.list, {
+      method: 'POST',
+      body: JSON.stringify({ userId, specialization, level  })
+    });
   }
 
   async getPatientsBySpecialization(specialization: string) {

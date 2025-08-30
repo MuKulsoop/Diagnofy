@@ -48,9 +48,9 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       // In a real app, these would be separate API calls
-      // We have to make an api call /:id/dashboard-modules
-      // api call for patient recent activity /:id/user-recent-cases
-      
+      // We have to make an api call /dashboard-modules
+      // api call for patient recent activity /user-recent-cases
+      // have to make an api which can give some dashboard analytics of the user like case completed, average score, study hours, current streak - /user-dashboard-stats
       
 
 
