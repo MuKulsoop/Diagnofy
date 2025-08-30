@@ -31,11 +31,12 @@ const Register: React.FC = () => {
     }
 
     try {
-      // await register({
-      //   name: formData.name,
-      //   email: formData.email,
-      //   password: formData.password
-      // });
+      const response = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+      console.log(response)
       navigate('/onboarding');
     } catch (err) {
       setError('Registration failed. Please try again.');
