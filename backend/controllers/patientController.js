@@ -66,7 +66,6 @@ export const generatePatients = async (req, res) => {
     
 
     return res.status(201).json({
-      message: "Patient generated successfully",
       AllPatients : AllPatients
     });
     

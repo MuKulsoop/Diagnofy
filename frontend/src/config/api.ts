@@ -28,7 +28,7 @@ export const apiConfig = {
       leaderboard: '/users/leaderboard'
     },
     patients: {
-      list: '/patients/generate',
+      list: '/patients/all-patients',
       bySpecialization: (specialization: string) => `/patients/specialization/${specialization}`
     },
     sessions: {
