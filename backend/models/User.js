@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     enum: ["Beginner", "Intermediate", "Advanced"]
   },
   institutionName: String,
+  
   location: {
     city: String,
     state: String,

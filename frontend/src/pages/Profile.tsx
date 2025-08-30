@@ -40,6 +40,7 @@ const Profile: React.FC = () => {
     yearOfStudy: 0,
     interests: [] as string[]
   });
+  
 
   useEffect(() => {
     if (user) {
