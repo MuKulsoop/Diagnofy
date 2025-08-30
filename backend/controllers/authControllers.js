@@ -56,7 +56,7 @@ export const loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user._id);
       
-      res.json({
+      res.status(200).json({
         user,
         token
       });
@@ -67,3 +67,16 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getUser = async(req,res) => {
+  try {
+  const {email} = req.email;
+  const user = await User.findOne({email})
+  res.status(200).json({
+    user
+  })
+  } catch (error) {
+    res.status(500).json({error: error.message})
+    
+  }
+}

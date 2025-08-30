@@ -108,6 +108,13 @@ export class ApiService {
     localStorage.setItem('email', response.user.email);
     localStorage.setItem('specialization', response.user.specialization);
     localStorage.setItem('level', response.user.experienceLevel);
+    localStorage.setItem('institution_name', response.user.institutionName);
+    localStorage.setItem('current_role', response.user.currentRole);
+    localStorage.setItem('location', response.user.location.city);
+    localStorage.setItem('location', response.user.location.state);
+    localStorage.setItem('location', response.user.location.country);
+    localStorage.setItem('interests', response.user.interests);
+
     this.setToken(response.token);
     return response;
   }
@@ -123,7 +130,12 @@ export class ApiService {
   }
 
   async getProfile() {
-    return this.request<User>(apiConfig.endpoints.auth.me);
+    const email = localStorage.getItem("email");
+    return this.request<User>(apiConfig.endpoints.auth.me, { 
+      method: "POST",
+      body: JSON.stringify(email)
+     } );
+
   }
 
   async updateProfile(userData: Partial<User>) {
@@ -132,7 +144,9 @@ export class ApiService {
       body: JSON.stringify(userData),
     });
   };
-  
+
+
+
 
   // Patients methods
   
