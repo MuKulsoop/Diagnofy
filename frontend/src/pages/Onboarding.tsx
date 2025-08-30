@@ -58,7 +58,8 @@ const Onboarding: React.FC = () => {
     if (currentStep === steps.length - 1) {
       setLoading(true);
       try {
-        // await updateUser({ ...formData, onboardingCompleted: true });
+        console.log(formData)
+        await updateUser({ ...formData, onboardingCompleted: true });
         navigate('/dashboard');
       } catch (error) {
         console.error('Onboarding completion failed:', error);

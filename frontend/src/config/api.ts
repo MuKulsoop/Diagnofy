@@ -1,5 +1,15 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
+export interface User {
+  name: string;
+  email: string;
+  password: string;
+  degree?: string;         
+  specialization?: string;  
+  interests?: string[];   
+  avatar?: string;         
+}
+
 export const apiConfig = {
   baseURL: API_BASE_URL,
   endpoints: {
@@ -11,7 +21,7 @@ export const apiConfig = {
     },
     users: {
       profile: '/users/profile',
-      update: '/users/update',
+      update: '/users/onboarding',
       leaderboard: '/users/leaderboard'
     },
     patients: {

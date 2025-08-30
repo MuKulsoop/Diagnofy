@@ -52,8 +52,9 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+
     const user = await User.findOne({ email });
-    
+
     // Check user and password
     if (user && (await user.matchPassword(password))) {
       const token = generateToken(user._id);

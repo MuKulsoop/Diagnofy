@@ -48,13 +48,24 @@ const Dashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       // In a real app, these would be separate API calls
-      const sessions = await apiService.getSessions();
+      // We have to make an api call /:id/dashboard-modules
+      // api call for patient recent activity /:id/user-recent-cases
+      
+      
+
+
+
+
+
+
+
+      // const sessions = await apiService.getSessions();
       
       // Calculate stats from sessions
-      const completedSessions = sessions.filter(s => s.finalDiagnosis);
-      const totalScore = completedSessions.reduce((sum, s) => 
-        sum + (s.finalDiagnosisReport?.overallScore || 0), 0
-      );
+      // const completedSessions = sessions.filter(s => s.finalDiagnosis);
+      // const totalScore = completedSessions.reduce((sum, s) => 
+      //   sum + (s.finalDiagnosisReport?.overallScore || 0), 0
+      // );
 
       setStats({
         casesCompleted: completedSessions.length,
